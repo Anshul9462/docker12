@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/anshul9462/docker12.git'
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                sh 'sudo docker build -t docker.io/anshul9462/apache:v1 .'
+            }
+        }
+        stage('Docker login') {
+            steps {
+                sh 'sudo docker login -u ${dockerhub_username} -p ${dockerhub_password}'
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                sh 'sudo docker push anshul9462/apache:v1'
+            }
+        }
+        stage('Remove Existing Containers') {
+            steps {
+               sh 'sudo ssh -i /linux.pem -o StrictHostKeyChecking=no centos@34.239.116.121 sudo docker rm -f apache'
+            }
+        }
+        stage('Docker Run') {
+            steps {
+                sh 'sudo ssh -i /linux.pem -o StrictHostKeyChecking=no centos@34.239.116.121 sudo docker run -itd --name apache -p 80:80 anshul9462/apache:v1'
+            }
+        }
+        stage('Check the status') {
+            steps {
+                sh 'sudo ssh -i /linux.pem -o StrictHostKeyChecking=no centos@34.239.116.121 sudo docker ps -a'
+            }
+        }
+    }
+}
